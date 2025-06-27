@@ -1,0 +1,29 @@
+Generate a full Java desktop application using JavaFX 21 and Maven for a project called "SwarmDrone Simulation System".
+
+Requirements:
+1. *Backend*: Use the provided domain model (DroneSwarm, Drone, Target, Coordinates, Mission, etc.). Implement core logic including:
+   - initializeFromTransactions(List<Transaction>)
+   - executeSwarmOperation()
+   - calculateKillProbability
+   - simulateMissionOutcome()
+
+2. *Frontend*: Use JavaFX to create a clean dashboard UI:
+   - A "Run Simulation" button.
+   - A table showing all targets with ID, type, priority, and kill probability.
+   - A label showing the cumulative kill probability after simulation.
+
+3. *Integration*:
+   - Backend should be called directly from frontend with no network/API.
+   - Structure code using com.example.swarm package.
+   - Place all source files under src/main/java.
+
+4. *Build System*:
+   - Use Maven with OpenJFX dependencies.
+   - Add javafx-maven-plugin to support mvn javafx:run.
+
+5. *Deliverables*:
+   - Full code: frontend, backend, pom.xml.
+   - Sample Transaction data hardcoded.
+   - Instructions to build and run from VS Code terminal.
+
+Output all code files using markdown code blocks. No explanation.
