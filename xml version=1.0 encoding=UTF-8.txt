@@ -1,0 +1,771 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+        http://maven.apache.org/xsd/maven-4.0.0.xsd">
+   <modelVersion>4.0.0</modelVersion>
+   
+   <groupId>com.example</groupId>
+   <artifactId>swarm-drone-simulation</artifactId>
+   <version>1.0.0</version>
+   <packaging>jar</packaging>
+   
+   <name>SwarmDrone Simulation System</name>
+   
+   <properties>
+       <maven.compiler.source>21</maven.compiler.source>
+       <maven.compiler.target>21</maven.compiler.target>
+       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+       <javafx.version>21.0.1</javafx.version>
+       <maven.compiler.plugin.version>3.11.0</maven.compiler.plugin.version>
+       <javafx.maven.plugin.version>0.0.8</javafx.maven.plugin.version>
+   </properties>
+   
+   <dependencies>
+       <dependency>
+           <groupId>org.openjfx</groupId>
+           <artifactId>javafx-controls</artifactId>
+           <version>${javafx.version}</version>
+       </dependency>
+       <dependency>
+           <groupId>org.openjfx</groupId>
+           <artifactId>javafx-fxml</artifactId>
+           <version>${javafx.version}</version>
+       </dependency>
+       <dependency>
+           <groupId>org.openjfx</groupId>
+           <artifactId>javafx-base</artifactId>
+           <version>${javafx.version}</version>
+       </dependency>
+   </dependencies>
+   
+   <build>
+       <plugins>
+           <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-compiler-plugin</artifactId>
+               <version>${maven.compiler.plugin.version}</version>
+               <configuration>
+                   <source>21</source>
+                   <target>21</target>
+               </configuration>
+           </plugin>
+           
+           <plugin>
+               <groupId>org.openjfx</groupId>
+               <artifactId>javafx-maven-plugin</artifactId>
+               <version>${javafx.maven.plugin.version}</version>
+               <configuration>
+                   <mainClass>com.example.swarm.SwarmDroneApplication</mainClass>
+               </configuration>
+           </plugin>
+       </plugins>
+   </build>
+</project>
+package com.example.swarm;
+
+import com.example.swarm.ui.MainController;
+import javafx.application.Application;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+
+public class SwarmDroneApplication extends Application {
+    
+    @Override
+    public void start(Stage primaryStage) throws Exception {
+        FXMLLoader loader = new FXMLLoader();
+        loader.setLocation(getClass().getResource("/main.fxml"));
+        
+        if (loader.getLocation() == null) {
+            // Fallback to programmatic UI creation
+            MainController controller = new MainController();
+            VBox root = controller.createUI();
+            Scene scene = new Scene(root, 1000, 700);
+            primaryStage.setScene(scene);
+        } else {
+            VBox root = loader.load();
+            Scene scene = new Scene(root, 1000, 700);
+            primaryStage.setScene(scene);
+        }
+        
+        primaryStage.setTitle("SwarmDrone Simulation System");
+        primaryStage.show();
+    }
+    
+    public static void main(String[] args) {
+        launch(args);
+    }
+}
+package com.example.swarm.model;
+
+import java.util.Objects;
+
+public class Coordinates {
+    private double x;
+    private double y;
+    private double z;
+    
+    public Coordinates(double x, double y, double z) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+    }
+    
+    public double getX() { return x; }
+    public void setX(double x) { this.x = x; }
+    
+    public double getY() { return y; }
+    public void setY(double y) { this.y = y; }
+    
+    public double getZ() { return z; }
+    public void setZ(double z) { this.z = z; }
+    
+    public double distanceTo(Coordinates other) {
+        double dx = this.x - other.x;
+        double dy = this.y - other.y;
+        double dz = this.z - other.z;
+        return Math.sqrt(dx*dx + dy*dy + dz*dz);
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Coordinates that = (Coordinates) o;
+        return Double.compare(that.x, x) == 0 &&
+               Double.compare(that.y, y) == 0 &&
+               Double.compare(that.z, z) == 0;
+    }
+    
+    @Override
+    public int hashCode() {
+        return Objects.hash(x, y, z);
+    }
+    
+    @Override
+    public String toString() {
+        return String.format("(%.2f, %.2f, %.2f)", x, y, z);
+    }
+}
+package com.example.swarm.model;
+
+import java.util.UUID;
+
+public class Drone {
+    private String id;
+    private String name;
+    private Coordinates position;
+    private DroneStatus status;
+    private double batteryLevel;
+    private double speed;
+    private double range;
+    private boolean isOperational;
+    
+    public enum DroneStatus {
+        IDLE, ACTIVE, MOVING, TARGETING, DISABLED, CHARGING
+    }
+    
+    public Drone(String name, Coordinates position) {
+        this.id = UUID.randomUUID().toString();
+        this.name = name;
+        this.position = position;
+        this.status = DroneStatus.IDLE;
+        this.batteryLevel = 100.0;
+        this.speed = 15.0;
+        this.range = 1000.0;
+        this.isOperational = true;
+    }
+    
+    public String getId() { return id; }
+    
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    
+    public Coordinates getPosition() { return position; }
+    public void setPosition(Coordinates position) { this.position = position; }
+    
+    public DroneStatus getStatus() { return status; }
+    public void setStatus(DroneStatus status) { this.status = status; }
+    
+    public double getBatteryLevel() { return batteryLevel; }
+    public void setBatteryLevel(double batteryLevel) { this.batteryLevel = batteryLevel; }
+    
+    public double getSpeed() { return speed; }
+    public void setSpeed(double speed) { this.speed = speed; }
+    
+    public double getRange() { return range; }
+    public void setRange(double range) { this.range = range; }
+    
+    public boolean isOperational() { return isOperational; }
+    public void setOperational(boolean operational) { isOperational = operational; }
+    
+    public boolean canReachTarget(Target target) {
+        return position.distanceTo(target.getPosition()) <= range && isOperational && batteryLevel > 20.0;
+    }
+    
+    @Override
+    public String toString() {
+        return String.format("Drone{id='%s', name='%s', pos=%s, status=%s, battery=%.1f%%}",
+                id.substring(0, 8), name, position, status, batteryLevel);
+    }
+}
+package com.example.swarm.model;
+
+import java.util.UUID;
+
+public class Target {
+    private String id;
+    private String name;
+    private TargetType type;
+    private Coordinates position;
+    private int priority;
+    private double killProbability;
+    private boolean isDestroyed;
+    private double defenseLevel;
+    
+    public enum TargetType {
+        VEHICLE, BUILDING, PERSONNEL, INFRASTRUCTURE, UNKNOWN
+    }
+    
+    public Target(String name, TargetType type, Coordinates position, int priority) {
+        this.id = UUID.randomUUID().toString();
+        this.name = name;
+        this.type = type;
+        this.position = position;
+        this.priority = priority;
+        this.killProbability = 0.0;
+        this.isDestroyed = false;
+        this.defenseLevel = Math.random() * 0.5; // 0-50% defense
+    }
+    
+    public String getId() { return id; }
+    
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    
+    public TargetType getType() { return type; }
+    public void setType(TargetType type) { this.type = type; }
+    
+    public Coordinates getPosition() { return position; }
+    public void setPosition(Coordinates position) { this.position = position; }
+    
+    public int getPriority() { return priority; }
+    public void setPriority(int priority) { this.priority = priority; }
+    
+    public double getKillProbability() { return killProbability; }
+    public void setKillProbability(double killProbability) { this.killProbability = killProbability; }
+    
+    public boolean isDestroyed() { return isDestroyed; }
+    public void setDestroyed(boolean destroyed) { isDestroyed = destroyed; }
+    
+    public double getDefenseLevel() { return defenseLevel; }
+    public void setDefenseLevel(double defenseLevel) { this.defenseLevel = defenseLevel; }
+    
+    @Override
+    public String toString() {
+        return String.format("Target{id='%s', name='%s', type=%s, priority=%d, killProb=%.2f%%}",
+                id.substring(0, 8), name, type, priority, killProbability * 100);
+    }
+}
+package com.example.swarm.model;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+public class Mission {
+    private String id;
+    private String name;
+    private List<Target> targets;
+    private List<Drone> assignedDrones;
+    private MissionStatus status;
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
+    private double successProbability;
+    private String operationType;
+    
+    public enum MissionStatus {
+        PLANNED, ACTIVE, COMPLETED, FAILED, ABORTED
+    }
+    
+    public Mission(String name, List<Target> targets, List<Drone> assignedDrones, String operationType) {
+        this.id = UUID.randomUUID().toString();
+        this.name = name;
+        this.targets = targets;
+        this.assignedDrones = assignedDrones;
+        this.operationType = operationType;
+        this.status = MissionStatus.PLANNED;
+        this.successProbability = 0.0;
+    }
+    
+    public String getId() { return id; }
+    
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    
+    public List<Target> getTargets() { return targets; }
+    public void setTargets(List<Target> targets) { this.targets = targets; }
+    
+    public List<Drone> getAssignedDrones() { return assignedDrones; }
+    public void setAssignedDrones(List<Drone> assignedDrones) { this.assignedDrones = assignedDrones; }
+    
+    public MissionStatus getStatus() { return status; }
+    public void setStatus(MissionStatus status) { this.status = status; }
+    
+    public LocalDateTime getStartTime() { return startTime; }
+    public void setStartTime(LocalDateTime startTime) { this.startTime = startTime; }
+    
+    public LocalDateTime getEndTime() { return endTime; }
+    public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
+    
+    public double getSuccessProbability() { return successProbability; }
+    public void setSuccessProbability(double successProbability) { this.successProbability = successProbability; }
+    
+    public String getOperationType() { return operationType; }
+    public void setOperationType(String operationType) { this.operationType = operationType; }
+}
+package com.example.swarm.model;
+
+import java.time.LocalDateTime;
+import java.util.Map;
+
+public class Transaction {
+    private String id;
+    private String type;
+    private LocalDateTime timestamp;
+    private Map<String, Object> data;
+    private String sourceSystem;
+    
+    public Transaction(String id, String type, Map<String, Object> data) {
+        this.id = id;
+        this.type = type;
+        this.data = data;
+        this.timestamp = LocalDateTime.now();
+        this.sourceSystem = "SwarmDrone";
+    }
+    
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
+    
+    public LocalDateTime getTimestamp() { return timestamp; }
+    public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
+    
+    public Map<String, Object> getData() { return data; }
+    public void setData(Map<String, Object> data) { this.data = data; }
+    
+    public String getSourceSystem() { return sourceSystem; }
+    public void setSourceSystem(String sourceSystem) { this.sourceSystem = sourceSystem; }
+}
+package com.example.swarm.model;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class DroneSwarm {
+    private String id;
+    private String name;
+    private List<Drone> drones;
+    private List<Target> targets;
+    private Mission currentMission;
+    private SwarmStatus status;
+    private Coordinates centerPosition;
+    
+    public enum SwarmStatus {
+        IDLE, ACTIVE, MISSION_READY, EXECUTING, COMPLETE
+    }
+    
+    public DroneSwarm(String name) {
+        this.id = java.util.UUID.randomUUID().toString();
+        this.name = name;
+        this.drones = new ArrayList<>();
+        this.targets = new ArrayList<>();
+        this.status = SwarmStatus.IDLE;
+        this.centerPosition = new Coordinates(0, 0, 100);
+    }
+    
+    public String getId() { return id; }
+    
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    
+    public List<Drone> getDrones() { return drones; }
+    public void setDrones(List<Drone> drones) { this.drones = drones; }
+    
+    public List<Target> getTargets() { return targets; }
+    public void setTargets(List<Target> targets) { this.targets = targets; }
+    
+    public Mission getCurrentMission() { return currentMission; }
+    public void setCurrentMission(Mission currentMission) { this.currentMission = currentMission; }
+    
+    public SwarmStatus getStatus() { return status; }
+    public void setStatus(SwarmStatus status) { this.status = status; }
+    
+    public Coordinates getCenterPosition() { return centerPosition; }
+    public void setCenterPosition(Coordinates centerPosition) { this.centerPosition = centerPosition; }
+    
+    public void addDrone(Drone drone) {
+        this.drones.add(drone);
+    }
+    
+    public void addTarget(Target target) {
+        this.targets.add(target);
+    }
+    
+    public List<Drone> getOperationalDrones() {
+        return drones.stream()
+                .filter(Drone::isOperational)
+                .collect(Collectors.toList());
+    }
+    
+    public int getOperationalDroneCount() {
+        return getOperationalDrones().size();
+    }
+}
+package com.example.swarm.service;
+
+import com.example.swarm.model.*;
+import java.util.*;
+import java.util.stream.Collectors;
+
+public class SwarmSimulationService {
+    private DroneSwarm swarm;
+    private Random random;
+    
+    public SwarmSimulationService() {
+        this.swarm = new DroneSwarm("Alpha Swarm");
+        this.random = new Random();
+        initializeSwarm();
+    }
+    
+    public void initializeFromTransactions(List<Transaction> transactions) {
+        swarm.getDrones().clear();
+        swarm.getTargets().clear();
+        
+        for (Transaction transaction : transactions) {
+            Map<String, Object> data = transaction.getData();
+            
+            switch (transaction.getType()) {
+                case "DRONE_INIT":
+                    String droneName = (String) data.get("name");
+                    Double x = (Double) data.get("x");
+                    Double y = (Double) data.get("y");
+                    Double z = (Double) data.get("z");
+                    Drone drone = new Drone(droneName, new Coordinates(x, y, z));
+                    swarm.addDrone(drone);
+                    break;
+                    
+                case "TARGET_INIT":
+                    String targetName = (String) data.get("name");
+                    String typeStr = (String) data.get("type");
+                    Target.TargetType type = Target.TargetType.valueOf(typeStr);
+                    Double tx = (Double) data.get("x");
+                    Double ty = (Double) data.get("y");
+                    Double tz = (Double) data.get("z");
+                    Integer priority = (Integer) data.get("priority");
+                    Target target = new Target(targetName, type, new Coordinates(tx, ty, tz), priority);
+                    swarm.addTarget(target);
+                    break;
+            }
+        }
+        
+        swarm.setStatus(DroneSwarm.SwarmStatus.MISSION_READY);
+    }
+    
+    public void executeSwarmOperation() {
+        if (swarm.getStatus() != DroneSwarm.SwarmStatus.MISSION_READY) {
+            return;
+        }
+        
+        swarm.setStatus(DroneSwarm.SwarmStatus.EXECUTING);
+        
+        // Calculate kill probabilities for all targets
+        for (Target target : swarm.getTargets()) {
+            double killProb = calculateKillProbability(target);
+            target.setKillProbability(killProb);
+        }
+        
+        // Create and execute mission
+        List<Drone> operationalDrones = swarm.getOperationalDrones();
+        Mission mission = new Mission("Swarm Operation", 
+                                    new ArrayList<>(swarm.getTargets()), 
+                                    operationalDrones, 
+                                    "ELIMINATION");
+        
+        swarm.setCurrentMission(mission);
+        simulateMissionOutcome(mission);
+        
+        swarm.setStatus(DroneSwarm.SwarmStatus.COMPLETE);
+    }
+    
+    public double calculateKillProbability(Target target) {
+        List<Drone> capableDrones = swarm.getOperationalDrones().stream()
+                .filter(drone -> drone.canReachTarget(target))
+                .collect(Collectors.toList());
+        
+        if (capableDrones.isEmpty()) {
+            return 0.0;
+        }
+        
+        // Base probability calculation
+        double baseProbability = 0.3; // 30% base chance per drone
+        double swarmBonus = Math.min(capableDrones.size() * 0.15, 0.6); // Max 60% bonus
+        double priorityMultiplier = 1.0 + (target.getPriority() * 0.1);
+        double defenseReduction = target.getDefenseLevel();
+        
+        // Target type modifiers
+        double typeModifier = switch (target.getType()) {
+            case VEHICLE -> 0.8;
+            case BUILDING -> 1.2;
+            case PERSONNEL -> 0.6;
+            case INFRASTRUCTURE -> 1.0;
+            case UNKNOWN -> 0.7;
+        };
+        
+        double killProbability = (baseProbability + swarmBonus) * priorityMultiplier * typeModifier * (1.0 - defenseReduction);
+        
+        // Cap at 95%
+        return Math.min(killProbability, 0.95);
+    }
+    
+    public void simulateMissionOutcome(Mission mission) {
+        mission.setStatus(Mission.MissionStatus.ACTIVE);
+        mission.setStartTime(java.time.LocalDateTime.now());
+        
+        double overallSuccessProbability = 1.0;
+        
+        for (Target target : mission.getTargets()) {
+            double killProb = target.getKillProbability();
+            
+            // Simulate engagement
+            boolean targetDestroyed = random.nextDouble() < killProb;
+            target.setDestroyed(targetDestroyed);
+            
+            if (targetDestroyed) {
+                // Update drones that participated
+                List<Drone> attackingDrones = mission.getAssignedDrones().stream()
+                        .filter(drone -> drone.canReachTarget(target))
+                        .limit(3) // Max 3 drones per target
+                        .collect(Collectors.toList());
+                
+                for (Drone drone : attackingDrones) {
+                    drone.setBatteryLevel(drone.getBatteryLevel() - random.nextDouble() * 20);
+                    drone.setStatus(Drone.DroneStatus.ACTIVE);
+                }
+            }
+            
+            overallSuccessProbability *= killProb;
+        }
+        
+        mission.setSuccessProbability(overallSuccessProbability);
+        mission.setStatus(Mission.MissionStatus.COMPLETED);
+        mission.setEndTime(java.time.LocalDateTime.now());
+    }
+    
+    public DroneSwarm getSwarm() {
+        return swarm;
+    }
+    
+    public double getCumulativeKillProbability() {
+        if (swarm.getTargets().isEmpty()) {
+            return 0.0;
+        }
+        
+        return swarm.getTargets().stream()
+                .mapToDouble(Target::getKillProbability)
+                .average()
+                .orElse(0.0);
+    }
+    
+    private void initializeSwarm() {
+        // Initialize with sample data
+        List<Transaction> sampleTransactions = createSampleTransactions();
+        initializeFromTransactions(sampleTransactions);
+    }
+    
+    private List<Transaction> createSampleTransactions() {
+        List<Transaction> transactions = new ArrayList<>();
+        
+        // Add sample drones
+        for (int i = 1; i <= 8; i++) {
+            Map<String, Object> droneData = new HashMap<>();
+            droneData.put("name", "Drone-" + String.format("%02d", i));
+            droneData.put("x", random.nextGaussian() * 50);
+            droneData.put("y", random.nextGaussian() * 50);
+            droneData.put("z", 100.0 + random.nextGaussian() * 20);
+            
+            transactions.add(new Transaction("DRONE_" + i, "DRONE_INIT", droneData));
+        }
+        
+        // Add sample targets
+        String[] targetNames = {"Command Post", "Supply Depot", "Communication Tower", 
+                               "Vehicle Convoy", "Personnel Bunker", "Radar Station"};
+        Target.TargetType[] types = {Target.TargetType.BUILDING, Target.TargetType.INFRASTRUCTURE, 
+                                   Target.TargetType.INFRASTRUCTURE, Target.TargetType.VEHICLE,
+                                   Target.TargetType.BUILDING, Target.TargetType.INFRASTRUCTURE};
+        
+        for (int i = 0; i < targetNames.length; i++) {
+            Map<String, Object> targetData = new HashMap<>();
+            targetData.put("name", targetNames[i]);
+            targetData.put("type", types[i].name());
+            targetData.put("x", random.nextGaussian() * 200);
+            targetData.put("y", random.nextGaussian() * 200);
+            targetData.put("z", 0.0);
+            targetData.put("priority", random.nextInt(5) + 1);
+            
+            transactions.add(new Transaction("TARGET_" + i, "TARGET_INIT", targetData));
+        }
+        
+        return transactions;
+    }
+}
+package com.example.swarm.ui;
+
+import com.example.swarm.model.Target;
+import com.example.swarm.service.SwarmSimulationService;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+
+public class MainController {
+    private SwarmSimulationService simulationService;
+    private TableView<TargetTableData> targetTable;
+    private Label cumulativeKillProbLabel;
+    private Button runSimulationButton;
+    private Label statusLabel;
+    private ObservableList<TargetTableData> targetData;
+    
+    public MainController() {
+        this.simulationService = new SwarmSimulationService();
+        this.targetData = FXCollections.observableArrayList();
+        loadInitialData();
+    }
+    
+    public VBox createUI() {
+        VBox root = new VBox(15);
+        root.setPadding(new Insets(20));
+        root.setStyle("-fx-background-color: #f5f5f5;");
+        
+        // Title
+        Label titleLabel = new Label("SwarmDrone Simulation System");
+        titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+        titleLabel.setTextFill(Color.DARKBLUE);
+        titleLabel.setAlignment(Pos.CENTER);
+        
+        // Control Panel
+        HBox controlPanel = createControlPanel();
+        
+        // Targets Table
+        VBox tableSection = createTableSection();
+        
+        // Results Section
+        VBox resultsSection = createResultsSection();
+        
+        // Status Bar
+        HBox statusBar = createStatusBar();
+        
+        root.getChildren().addAll(titleLabel, controlPanel, tableSection, resultsSection, statusBar);
+        
+        return root;
+    }
+    
+    private HBox createControlPanel() {
+        HBox controlPanel = new HBox(10);
+        controlPanel.setPadding(new Insets(10));
+        controlPanel.setAlignment(Pos.CENTER);
+        controlPanel.setStyle("-fx-background-color: white; -fx-border-color: #ddd; -fx-border-radius: 5;");
+        
+        runSimulationButton = new Button("Run Simulation");
+        runSimulationButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10 20;");
+        runSimulationButton.setOnAction(e -> runSimulation());
+        
+        Button resetButton = new Button("Reset");
+        resetButton.setStyle("-fx-background-color: #f44336; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10 20;");
+        resetButton.setOnAction(e -> resetSimulation());
+        
+        Button refreshButton = new Button("Refresh Data");
+        refreshButton.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10 20;");
+        refreshButton.setOnAction(e -> loadInitialData());
+        
+        Label droneCountLabel = new Label("Operational Drones: " + simulationService.getSwarm().getOperationalDroneCount());
+        droneCountLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        
+        controlPanel.getChildren().addAll(runSimulationButton, resetButton, refreshButton, 
+                                        new Separator(), droneCountLabel);
+        
+        return controlPanel;
+    }
+    
+    private VBox createTableSection() {
+        VBox tableSection = new VBox(10);
+        
+        Label tableTitle = new Label("Target Analysis");
+        tableTitle.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        
+        targetTable = new TableView<>();
+        targetTable.setItems(targetData);
+        targetTable.setPrefHeight(300);
+        
+        // ID Column
+        TableColumn<TargetTableData, String> idColumn = new TableColumn<>("Target ID");
+        idColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
+        idColumn.setPrefWidth(100);
+        
+        // Name Column
+        TableColumn<TargetTableData, String> nameColumn = new TableColumn<>("Name");
+        nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+        nameColumn.setPrefWidth(150);
+        
+        // Type Column
+        TableColumn<TargetTableData, String> typeColumn = new TableColumn<>("Type");
+        typeColumn.setCellValueFactory(new PropertyValueFactory<>("type"));
+        typeColumn.setPrefWidth(120);
+        
+        // Priority Column
+        TableColumn<TargetTableData, Integer> priorityColumn = new TableColumn<>("Priority");
+        priorityColumn.setCellValueFactory(new PropertyValueFactory<>("priority"));
+        priorityColumn.setPrefWidth(80);
+        
+        // Kill Probability Column
+        TableColumn<TargetTableData, String> killProbColumn = new TableColumn<>("Kill Probability");
+        killProbColumn.setCellValueFactory(new PropertyValueFactory<>("killProbability"));
+        killProbColumn.setPrefWidth(130);
+        
+        // Status Column
+        TableColumn<TargetTableData, String> statusColumn = new TableColumn<>("Status");
+        statusColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
+        statusColumn.setPrefWidth(100);
+        
+        targetTable.getColumns().addAll(idColumn, nameColumn, typeColumn, priorityColumn, killProbColumn, statusColumn);
+        
+        tableSection.getChildren().addAll(tableTitle, targetTable);
+        
+        return tableSection;
+    }
+    
+    private VBox createResultsSection() {
+        VBox resultsSection = new VBox(10);
+        resultsSection.setPadding(new Insets(15));
+        resultsSection.setStyle("-fx-background-color: white; -fx-border-color: #ddd; -fx-border-radius: 5;");
+        
+        Label resultsTitle = new Label("Simulation Results");
+        resultsTitle.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        
+        cumulativeKillProbLabel = new Label("Cumulative Kill Probability: Not calculated");
+        cumulativeKillProbLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        cumul
